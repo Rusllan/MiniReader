@@ -1,5 +1,7 @@
-import argparse
 import os
+import json
+import argparse
+
 import requests
 from bs4 import BeautifulSoup
 import textwrap
@@ -14,13 +16,19 @@ class Article:
 
     def __init__(self, url):
         self.url = url
-        self.tags_to_read = ['p', 'h1', 'h2', 'h3']
+        self.tags_to_find = []
+        self.load_setup()
 
         self.text = self.text_from_html(get_html(self.url))
 
+    def load_setup(self):
+        with open('setup.json', 'r') as setup_file:
+            setup = json.load(setup_file)
+            self.tags_to_find = setup['tags_to_find']
+
     def text_from_html(self, html):
         soup = BeautifulSoup(html, features="html.parser")
-        blocks = soup.find_all(self.tags_to_read)
+        blocks = soup.find_all(self.tags_to_find)
         text = ''
 
         for block in blocks:
