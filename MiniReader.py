@@ -49,9 +49,11 @@ class Article:
 
 
 def main():
-    url = 'https://meduza.io/slides/prishlos-120-chasov-podmetat-pol-i-myt-tramvai-v-transportnom-depo'
+    parser = argparse.ArgumentParser(description='Little utility for creation easy to read txt files from web pages.')
+    parser.add_argument('url', help='Url from which text will be formed.')
+    args = parser.parse_args()
 
-    article = Article(url)
+    article = Article(args.url)
     print(article.text)
     article.save()
 
