@@ -7,8 +7,8 @@ import textwrap
 
 
 def get_html(url):
-    r = requests.get(url)
-    return r.text
+    request = requests.get(url)
+    return request.text
 
 
 class Article:
@@ -32,29 +32,29 @@ class Article:
     def text_from_html(self, html):
         soup = BeautifulSoup(html, features="html.parser")
 
-        blocks = []
+        ignore_tags = soup.find_all(True, {'class': self.classes_to_ignore})
+        for ignore_tag in ignore_tags:
+            ignore_tag.decompose()
+
+        if self.show_links:
+            for a in soup.findAll('a'):
+                if a.has_attr('href') and 'http' in a['href']:
+                    a.replace_with('{}[{}]'.format(a.text, a['href']))
+
+        tags = []
         if soup.find(class_=self.classes_to_include):
-            blocks += soup.find_all('h1')
-            blocks += soup.find_all(True, {'class': self.classes_to_include})
+            tags += soup.find_all('h1')
+            tags += soup.find_all(True, {'class': self.classes_to_include})
+            for found_tag in soup.findAll(self.tags_to_find):
+                found_tag.replace_with('{}\n'.format(found_tag.text))
         else:
-            blocks += soup.find_all(self.tags_to_find)
+            tags += soup.find_all(self.tags_to_find)
         text = ''
 
-        for block in blocks:
-            if self.show_links:
-                for a in soup.findAll('a'):
-                    a.replace_with('{}[{}]'.format(a.text, a['href']))
-            ignore = False
-            if block.has_attr('class'):
-                for x in block['class']:
-                    for y in self.classes_to_ignore:
-                        if x == y:
-                            ignore = True
-
-            if not ignore:
-                for b in block.text.split('\n'):
-                    if b not in ['', '\r']:
-                        text += textwrap.fill(b, 80) + '\n\n'
+        for tag in tags:
+            for block in tag.text.split('\n'):
+                if block not in ['', '\r']:
+                    text += textwrap.fill(b, 80) + '\n\n'
         return text
 
     def save(self):
@@ -66,9 +66,12 @@ class Article:
         else:
             cleaned_url = self.url
 
+        if cleaned_url[-1] == '/':
+            cleaned_url = cleaned_url[:-1]
+
         folders = cleaned_url.split('/')[:-1]
         path = './'
-        for i, folder in enumerate(folders):
+        for folder in folders:
             path += folder + '/'
             if not os.path.exists(path):
                 os.mkdir(path)

@@ -1,0 +1,6 @@
+{
+    "tags_to_find": ["p", "h1", "h2", "h3"],
+    "classes_to_include": ["post__text", "entry_content", "entry-content"],
+    "classes_to_ignore": ["RelatedBlock-header", "Footer-groupTitle", "l-flex", "image-caption", "reviews-row", "b-topic-longgrid"],
+    "show_links": true
+}
