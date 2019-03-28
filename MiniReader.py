@@ -15,33 +15,42 @@ class Article:
 
     def __init__(self, url):
         self.url = url
-        self.tags_to_find = []
-        self.classes_to_ignore = []
-        self.load_setup()
+        setup = self.load_setup()
+        self.tags_to_find = setup['tags_to_find']
+        self.classes_to_ignore = setup['classes_to_ignore']
+        self.classes_to_include = setup['classes_to_include']
 
         self.text = self.text_from_html(get_html(self.url))
 
-    def load_setup(self):
+    @staticmethod
+    def load_setup():
         with open('setup.json', 'r') as setup_file:
             setup = json.load(setup_file)
-            self.tags_to_find = setup['tags_to_find']
-            self.classes_to_ignore = setup['classes_to_ignore']
+        return setup
 
     def text_from_html(self, html):
         soup = BeautifulSoup(html, features="html.parser")
-        blocks = soup.find_all(self.tags_to_find)
+
+        blocks = []
+        if soup.find(class_=self.classes_to_include):
+            blocks += soup.find_all('h1')
+            blocks += soup.find_all(True, {'class': self.classes_to_include})
+        else:
+            blocks += soup.find_all(self.tags_to_find)
         text = ''
 
         for block in blocks:
-
             ignore = False
-            for x in block['class']:
-                for y in self.classes_to_ignore:
-                    if x == y:
-                        ignore = True
+            if block.has_attr('class'):
+                for x in block['class']:
+                    for y in self.classes_to_ignore:
+                        if x == y:
+                            ignore = True
 
             if not ignore:
-                text += textwrap.fill(block.text, 80) + '\n\n'
+                for b in block.text.split('\n'):
+                    if b not in ['', '\r']:
+                        text += textwrap.fill(b, 80) + '\n\n'
         return text
 
     def save(self):
