@@ -19,6 +19,7 @@ class Article:
         self.tags_to_find = setup['tags_to_find']
         self.classes_to_ignore = setup['classes_to_ignore']
         self.classes_to_include = setup['classes_to_include']
+        self.show_links = setup['show_links']
 
         self.text = self.text_from_html(get_html(self.url))
 
@@ -40,6 +41,9 @@ class Article:
         text = ''
 
         for block in blocks:
+            if self.show_links:
+                for a in soup.findAll('a'):
+                    a.replace_with('{}[{}]'.format(a.text, a['href']))
             ignore = False
             if block.has_attr('class'):
                 for x in block['class']:
